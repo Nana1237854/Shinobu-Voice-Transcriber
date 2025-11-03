@@ -133,6 +133,7 @@ class TranscriptionService:
                 - translated_srt: 翻译后的 SRT 文件路径（用于双语格式）
                 - include_timestamp: 是否包含时间戳（默认 True）
                 - split_parts: 均分人数（默认 0，表示不均分）
+                - save_folder: 保存文件夹路径（默认为输入文件所在目录）
         
         Returns:
             结果字典，包含 output_path 和 srt_path，如果失败返回 None
@@ -565,10 +566,19 @@ class TranscriptionService:
         # 获取均分人数设置（默认为 0，表示不均分）
         split_parts = kwargs.get('split_parts', 0)
         
+        # 获取保存文件夹（默认为输入文件所在目录）
+        save_folder = kwargs.get('save_folder')
+        if save_folder:
+            save_folder = Path(save_folder)
+            # 确保保存文件夹存在
+            save_folder.mkdir(parents=True, exist_ok=True)
+        else:
+            save_folder = input_file.parent
+        
         # 原文格式处理
         if output_format == OutputFormat.SRT_ORIGINAL:
             # 原文 SRT（始终包含时间戳，这是 SRT 格式的必需部分）
-            output_file = input_file.with_suffix('.srt')
+            output_file = save_folder / f"{input_file.stem}.srt"
             if srt_file != output_file:
                 import shutil
                 shutil.copy(srt_file, output_file)
@@ -576,19 +586,19 @@ class TranscriptionService:
         
         elif output_format == OutputFormat.LRC_ORIGINAL:
             # 原文 LRC（始终包含时间戳，这是 LRC 格式的必需部分）
-            output_file = input_file.with_suffix('.lrc')
+            output_file = save_folder / f"{input_file.stem}.lrc"
             self._srt_to_lrc(srt_file, output_file)
             return output_file
         
         elif output_format == OutputFormat.TXT_ORIGINAL:
             # 原文 TXT
-            output_file = input_file.with_suffix('.txt')
+            output_file = save_folder / f"{input_file.stem}.txt"
             self._srt_to_txt(srt_file, output_file, include_timestamp=include_timestamp, split_parts=split_parts)
             return output_file
         
         elif output_format == OutputFormat.XLSX_ORIGINAL:
             # 原文 XLSX
-            output_file = input_file.with_suffix('.xlsx')
+            output_file = save_folder / f"{input_file.stem}.xlsx"
             self._srt_to_xlsx(srt_file, output_file, include_timestamp=include_timestamp, split_parts=split_parts)
             return output_file
         
@@ -600,7 +610,7 @@ class TranscriptionService:
                 print("[WARNING] 未找到翻译文件，仅输出原文")
                 return self._generate_output(srt_file, input_file, OutputFormat.SRT_ORIGINAL, kwargs)
             
-            output_file = input_file.with_name(f"{input_file.stem}_bilingual.srt")
+            output_file = save_folder / f"{input_file.stem}_bilingual.srt"
             self._merge_bilingual_srt(srt_file, Path(translated_srt), output_file)
             return output_file
         
@@ -611,7 +621,7 @@ class TranscriptionService:
                 print("[WARNING] 未找到翻译文件，仅输出原文")
                 return self._generate_output(srt_file, input_file, OutputFormat.TXT_ORIGINAL, kwargs)
             
-            output_file = input_file.with_name(f"{input_file.stem}_bilingual.txt")
+            output_file = save_folder / f"{input_file.stem}_bilingual.txt"
             self._merge_bilingual_txt(srt_file, Path(translated_srt), output_file, 
                                       include_timestamp=include_timestamp, split_parts=split_parts)
             return output_file
@@ -623,7 +633,7 @@ class TranscriptionService:
                 print("[WARNING] 未找到翻译文件，仅输出原文")
                 return self._generate_output(srt_file, input_file, OutputFormat.XLSX_ORIGINAL, kwargs)
             
-            output_file = input_file.with_name(f"{input_file.stem}_bilingual.xlsx")
+            output_file = save_folder / f"{input_file.stem}_bilingual.xlsx"
             self._merge_bilingual_xlsx(srt_file, Path(translated_srt), output_file,
                                        include_timestamp=include_timestamp, split_parts=split_parts)
             return output_file

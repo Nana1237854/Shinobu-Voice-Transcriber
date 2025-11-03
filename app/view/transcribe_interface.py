@@ -445,14 +445,19 @@ class TranscribeInterface(ScrollArea):
         
         print(f"[听写任务] 均分人数: {split_parts if split_parts > 0 else '不均分'}")
         
-        # 7. 创建并启动工作线程
+        # 7. 获取保存目录
+        save_folder = cfg.get(cfg.saveFolder)
+        print(f"[听写任务] 保存目录: {save_folder}")
+        
+        # 8. 创建并启动工作线程
         self.worker = TranscriptionWorker(
             input_path=self.selectedFilePath,
             whisper_model=whisper_model,
             language=language,
             output_format=output_format,
             include_timestamp=include_timestamp,
-            split_parts=split_parts
+            split_parts=split_parts,
+            save_folder=save_folder
         )
         
         # 连接信号
