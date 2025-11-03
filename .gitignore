@@ -1,0 +1,43 @@
+# 忽略.vscode文件夹
+.vscode/
+.VSCodeCounter
+
+# 忽略python缓存文件
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# 忽略数据文件夹
+data/
+AppData/
+
+# 忽略日志文件
+log.txt
+
+# 忽略工具文件
+tools/
+
+# 忽略环境配置文件
+.env
+.env.*
+
+# 忽略虚拟环境文件夹
+venv/
+
+# 忽略构建产物
+dist/
+build/
+*.spec
+
+
+# 忽略模型文件
+faster-whisper*/
+
+# 忽略models文件夹下的模型文件
+**/models/llama/*.dll
+**/models/llama/*.exe
+**/models/whisper
+**/models/whisper-faster
+**/models/uvr
+**/models/GalTransl/**/*.json
