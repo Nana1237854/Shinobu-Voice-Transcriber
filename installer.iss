@@ -1,10 +1,7 @@
-; Inno Setup 安装脚本 - Shinobu Voice Transcriber
-; 需要先安装 Inno Setup: https://jrsoftware.org/isdl.php
-
 #define MyAppName "Shinobu Voice Transcriber"
 #define MyAppVersion "1.0.0"
 #define MyAppPublisher "Shinobu Voice Transcriber"
-#define MyAppURL "https://github.com/yourusername/shinobu-voice-transcriber"
+#define MyAppURL "https://github.com/Nana1237854/Shinobu-Voice-Transcriber"
 #define MyAppExeName "Shinobu-Voice-Transcriber.exe"
 
 [Setup]

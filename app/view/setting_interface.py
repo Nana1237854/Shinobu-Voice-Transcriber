@@ -3,18 +3,20 @@ from qfluentwidgets import (SwitchSettingCard, FolderListSettingCard,
                             OptionsSettingCard, PushSettingCard,
                             HyperlinkCard, PrimaryPushSettingCard, ScrollArea,
                             ComboBoxSettingCard, ExpandLayout, Theme, CustomColorSettingCard,
-                            setTheme, setThemeColor, isDarkTheme, setFont)
+                            setTheme, setThemeColor, isDarkTheme, setFont, PushButton,
+                            IndeterminateProgressBar, SettingCard)
 from qfluentwidgets import FluentIcon as FIF
 from qfluentwidgets import SettingCardGroup as CardGroup
 from qfluentwidgets import InfoBar
 from PySide6.QtCore import Qt, Signal, QUrl, QStandardPaths
 from PySide6.QtGui import QDesktopServices, QFont
-from PySide6.QtWidgets import QWidget, QLabel, QFileDialog
+from PySide6.QtWidgets import QWidget, QLabel, QFileDialog, QVBoxLayout, QHBoxLayout
 
 from ..common.config import cfg, isWin11
 from ..common.setting import HELP_URL, FEEDBACK_URL, AUTHOR, VERSION, YEAR
 from ..common.signal_bus import signalBus
 from ..common.style_sheet import StyleSheet
+from ..service.download_service import downloadService
 
 
 class SettingCardGroup(CardGroup):
@@ -22,6 +24,62 @@ class SettingCardGroup(CardGroup):
    def __init__(self, title: str, parent=None):
        super().__init__(title, parent)
        setFont(self.titleLabel, 14, QFont.Weight.DemiBold)
+
+
+class DownloadSettingCard(SettingCard):
+    """带下载按钮和进度条的设置卡片"""
+    
+    clicked = Signal()
+    
+    def __init__(self, icon, title, content, parent=None):
+        super().__init__(icon, title, content, parent)
+        
+        # 创建按钮
+        self.button = PushButton('下载', self)
+        self.button.setFixedWidth(120)
+        self.button.clicked.connect(self.clicked)
+        
+        # 创建进度条
+        self.progressBar = IndeterminateProgressBar(self)
+        self.progressBar.setFixedHeight(3)
+        self.progressBar.hide()
+        self.progressBar.stop()
+        
+        # 添加按钮到水平布局
+        self.hBoxLayout.addWidget(self.button, 0, Qt.AlignRight)
+        self.hBoxLayout.addSpacing(16)
+        
+        # 获取卡片的主布局（vBoxLayout）并添加进度条
+        # SettingCard 的结构是 vBoxLayout 包含 hBoxLayout
+        # 我们需要在 hBoxLayout 下方添加进度条
+        if hasattr(self, 'vBoxLayout'):
+            self.vBoxLayout.addWidget(self.progressBar)
+    
+    def setDownloading(self, isDownloading: bool):
+        """设置下载状态"""
+        if isDownloading:
+            self.button.setText('下载中...')
+            self.button.setEnabled(False)
+            self.progressBar.show()
+            self.progressBar.start()
+        else:
+            self.button.setEnabled(True)
+            self.progressBar.stop()
+            self.progressBar.hide()
+    
+    def setInstalled(self):
+        """标记为已安装"""
+        self.button.setText('已安装')
+        self.button.setEnabled(False)
+        self.progressBar.hide()
+        self.progressBar.stop()
+    
+    def setDownloadable(self):
+        """标记为可下载"""
+        self.button.setText('下载')
+        self.button.setEnabled(True)
+        self.progressBar.hide()
+        self.progressBar.stop()
 
 
 
@@ -32,6 +90,10 @@ class SettingInterface(ScrollArea):
         super().__init__(parent=parent)
         self.scrollWidget = QWidget()
         self.expandLayout = ExpandLayout(self.scrollWidget)
+        
+        # download threads
+        self.ffmpegDownloadThread = None
+        self.whisperDownloadThread = None
 
         # setting label
         self.settingLabel = QLabel(self.tr("Settings"), self)
@@ -75,6 +137,22 @@ class SettingInterface(ScrollArea):
             self.tr('Set your preferred language for UI'),
             texts=['简体中文', '繁體中文', 'English', self.tr('Use system setting')],
             parent=self.personalGroup
+        )
+
+        # download dependencies
+        self.downloadGroup = SettingCardGroup(
+            '下载依赖', self.scrollWidget)
+        self.downloadFFmpegCard = DownloadSettingCard(
+            FIF.DOWNLOAD,
+            'FFmpeg',
+            '下载 FFmpeg 用于音频/视频处理',
+            self.downloadGroup
+        )
+        self.downloadWhisperCard = DownloadSettingCard(
+            FIF.DOWNLOAD,
+            'Whisper-Faster-XXL',
+            '下载 Whisper-Faster-XXL 用于语音转录',
+            self.downloadGroup
         )
 
         # update software
@@ -134,6 +212,9 @@ class SettingInterface(ScrollArea):
 
         self.micaCard.setEnabled(isWin11())
 
+        # initialize download cards status
+        self._updateDownloadCardsStatus()
+
         # initialize layout
         self.__initLayout()
         self._connectSignalToSlot()
@@ -146,6 +227,9 @@ class SettingInterface(ScrollArea):
         self.personalGroup.addSettingCard(self.zoomCard)
         self.personalGroup.addSettingCard(self.languageCard)
 
+        self.downloadGroup.addSettingCard(self.downloadFFmpegCard)
+        self.downloadGroup.addSettingCard(self.downloadWhisperCard)
+
         self.updateSoftwareGroup.addSettingCard(self.updateOnStartUpCard)
 
         self.aboutGroup.addSettingCard(self.helpCard)
@@ -156,6 +240,7 @@ class SettingInterface(ScrollArea):
         self.expandLayout.setSpacing(28)
         self.expandLayout.setContentsMargins(36, 10, 36, 0)
         self.expandLayout.addWidget(self.personalGroup)
+        self.expandLayout.addWidget(self.downloadGroup)
         self.expandLayout.addWidget(self.updateSoftwareGroup)
         self.expandLayout.addWidget(self.aboutGroup)
 
@@ -176,9 +261,105 @@ class SettingInterface(ScrollArea):
         cfg.themeChanged.connect(setTheme)
         self.micaCard.checkedChanged.connect(signalBus.micaEnableChanged)
 
+        # download
+        self.downloadFFmpegCard.clicked.connect(self._onDownloadFFmpegClicked)
+        self.downloadWhisperCard.clicked.connect(self._onDownloadWhisperClicked)
+
         # check update
         self.aboutCard.clicked.connect(signalBus.checkUpdateSig)
 
         # about
         self.feedbackCard.clicked.connect(
             lambda: QDesktopServices.openUrl(QUrl(FEEDBACK_URL)))
+
+    def _updateDownloadCardsStatus(self):
+        """ Update download cards button text and status """
+        # Update FFmpeg card
+        if downloadService.check_ffmpeg_exists():
+            self.downloadFFmpegCard.setInstalled()
+        else:
+            self.downloadFFmpegCard.setDownloadable()
+        
+        # Update Whisper-Faster card
+        if downloadService.check_whisper_faster_exists():
+            self.downloadWhisperCard.setInstalled()
+        else:
+            self.downloadWhisperCard.setDownloadable()
+
+    def _onDownloadFFmpegClicked(self):
+        """ Handle FFmpeg download button click """
+        if self.ffmpegDownloadThread and self.ffmpegDownloadThread.isRunning():
+            return
+        
+        self.downloadFFmpegCard.setDownloading(True)
+        
+        InfoBar.info(
+            '开始下载',
+            '正在下载 FFmpeg，请稍候...',
+            duration=2000,
+            parent=self
+        )
+        
+        self.ffmpegDownloadThread = downloadService.create_ffmpeg_download_thread()
+        self.ffmpegDownloadThread.finished.connect(self._onFFmpegDownloadFinished)
+        self.ffmpegDownloadThread.start()
+
+    def _onDownloadWhisperClicked(self):
+        """ Handle Whisper-Faster download button click """
+        if self.whisperDownloadThread and self.whisperDownloadThread.isRunning():
+            return
+        
+        self.downloadWhisperCard.setDownloading(True)
+        
+        InfoBar.info(
+            '开始下载',
+            '正在下载 Whisper-Faster-XXL，请稍候...',
+            duration=2000,
+            parent=self
+        )
+        
+        self.whisperDownloadThread = downloadService.create_whisper_download_thread()
+        self.whisperDownloadThread.finished.connect(self._onWhisperDownloadFinished)
+        self.whisperDownloadThread.start()
+
+    def _onFFmpegDownloadFinished(self, success, message):
+        """ Handle FFmpeg download finished """
+        self.downloadFFmpegCard.setDownloading(False)
+        
+        if success:
+            InfoBar.success(
+                '下载完成',
+                'FFmpeg 已成功下载并安装',
+                duration=3000,
+                parent=self
+            )
+        else:
+            InfoBar.error(
+                '下载失败',
+                f'下载 FFmpeg 失败: {message}',
+                duration=5000,
+                parent=self
+            )
+        
+        self._updateDownloadCardsStatus()
+
+    def _onWhisperDownloadFinished(self, success, message):
+        """ Handle Whisper-Faster download finished """
+        self.downloadWhisperCard.setDownloading(False)
+        
+        if success:
+            InfoBar.success(
+                '下载完成',
+                'Whisper-Faster-XXL 已成功下载并安装',
+                duration=3000,
+                parent=self
+            )
+        else:
+            InfoBar.error(
+                '下载失败',
+                f'下载 Whisper-Faster-XXL 失败: {message}',
+                duration=5000,
+                parent=self
+            )
+        
+        self._updateDownloadCardsStatus()

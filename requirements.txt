@@ -1,1 +1,2 @@
 PySide6-Fluent-Widgets>=1.5.5
+py7zr>=0.20.0

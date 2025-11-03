@@ -25,6 +25,7 @@
 - 🎬 **格式兼容**：自动提取音视频文件的音轨，支持常见的音视频格式
 - 📊 **任务管理**：内置任务日志查看器，实时查看转录进度和结果
 - 🔧 **灵活配置**：可自定义时间戳显示、均分人数等参数
+- 📥 **一键下载**：内置依赖自动下载功能，无需手动配置 FFmpeg 和 Whisper-Faster-XXL
 
 ## 📋 系统要求
 
@@ -60,13 +61,35 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
+**依赖说明**：
+- `PySide6-Fluent-Widgets>=1.5.5` - 现代化 UI 框架
+- `py7zr>=0.20.0` - 支持 7z 格式解压（用于自动下载功能）
+- 其他依赖会自动安装
+
 ### 2. 安装 FFmpeg
 
 本工具需要 FFmpeg 来提取音频。
 
+#### 🆕 选项 A：自动下载（推荐，适用于 Windows）
+
+1. 运行程序后，打开"设置"界面
+2. 找到"下载依赖"部分
+3. 点击 FFmpeg 卡片上的"下载"按钮
+4. 等待下载完成（约 100MB，耗时 1-5 分钟）
+5. 下载完成后，按钮将显示"已安装"
+
+**特点**：
+- ✅ 一键下载，无需手动配置
+- ✅ 自动解压到正确位置
+- ✅ 显示实时下载进度
+- ✅ 自动检测是否已安装
+
+#### 选项 B：手动安装
+
 **Windows 用户**：
-- FFmpeg 可执行文件已包含在 `app/tools/` 目录中
-- 或者从 [FFmpeg 官网](https://ffmpeg.org/download.html) 下载并添加到系统 PATH
+- 从 [FFmpeg 官网](https://ffmpeg.org/download.html) 下载
+- 将 `ffmpeg.exe` 放置在 `app/tools/` 目录中
+- 或添加到系统 PATH
 
 **Linux 用户**：
 ```bash
@@ -81,12 +104,30 @@ brew install ffmpeg
 
 ### 3. 准备 Whisper 模型
 
+#### 🆕 选项 A：下载 Whisper-Faster-XXL（推荐，Windows 用户）
+
+这是一个独立的 Whisper 可执行文件，无需额外配置 Python 环境：
+
+1. 运行程序后，打开"设置"界面
+2. 找到"下载依赖"部分
+3. 点击 Whisper-Faster-XXL 卡片上的"下载"按钮
+4. 等待下载完成（约 2GB，耗时 10-30 分钟，取决于网络速度）
+5. 下载完成后自动配置完成，按钮将显示"已安装"
+
+**特点**：
+- ✅ 包含所有必需的依赖和模型
+- ✅ 开箱即用，无需额外配置
+- ✅ 优化过的执行速度
+- ✅ 支持 GPU 加速（如果可用）
+
+#### 选项 B：使用 Hugging Face 模型
+
 首次运行时，程序会自动扫描模型目录。您可以：
 
-**选项 A：自动下载（推荐）**
+**自动下载**：
 - 首次运行时，选择模型后程序会自动从 Hugging Face 下载
 
-**选项 B：手动下载**
+**手动下载**：
 - 将模型文件放置在 `app/common/models/whisper-faster/` 目录下
 - 模型目录结构：
   ```
@@ -203,7 +244,8 @@ Shinobu-Voice-Transcriber/
 │   │   ├── model_scanner.py # 模型扫描器
 │   │   └── ...
 │   ├── service/             # 业务服务
-│   │   └── transcription_service.py  # 转录核心服务
+│   │   ├── transcription_service.py  # 转录核心服务
+│   │   └── download_service.py       # 下载服务
 │   ├── view/                # 界面视图
 │   │   ├── main_window.py   # 主窗口
 │   │   ├── transcribe_interface.py  # 转录界面
@@ -232,19 +274,30 @@ Shinobu-Voice-Transcriber/
 3. 处理较短的音频片段
 4. 升级系统内存
 
+### Q: 自动下载失败怎么办？
+
+**A**: 如果在设置界面的自动下载功能失败：
+1. **检查网络连接**：确保网络稳定，可以访问 GitHub
+2. **检查磁盘空间**：确保有足够的剩余空间（FFmpeg ~100MB，Whisper-Faster-XXL ~2GB）
+3. **查看错误信息**：下载失败时会显示详细的错误信息
+4. **使用手动下载**：参考"快速开始"部分的手动安装方法
+5. **查看日志**：检查 `AppData/log.txt` 获取详细错误信息
+
 ### Q: 模型下载失败？
 
 **A**: 
-1. 检查网络连接
-2. 可能需要科学上网访问 Hugging Face
-3. 可手动下载模型文件放入 `app/common/models/whisper-faster/` 目录
+1. 优先使用设置界面的"Whisper-Faster-XXL"自动下载（Windows 用户）
+2. 检查网络连接
+3. 可能需要科学上网访问 Hugging Face（使用 HF 模型时）
+4. 可手动下载模型文件放入 `app/common/models/whisper-faster/` 目录
 
 ### Q: FFmpeg 错误？
 
 **A**: 
-1. 确认 FFmpeg 已正确安装
-2. Windows 用户检查 `app/tools/ffmpeg.exe` 是否存在
-3. Linux/macOS 用户运行 `ffmpeg -version` 确认
+1. 使用设置界面的自动下载功能（Windows 用户推荐）
+2. 确认 FFmpeg 已正确安装
+3. Windows 用户检查 `app/tools/ffmpeg.exe` 是否存在
+4. Linux/macOS 用户运行 `ffmpeg -version` 确认
 
 ### Q: 支持哪些音视频格式？
 
@@ -276,6 +329,44 @@ Shinobu-Voice-Transcriber/
 3. 提交更改：`git commit -m 'Add some AmazingFeature'`
 4. 推送到分支：`git push origin feature/AmazingFeature`
 5. 提交 Pull Request
+
+## 📝 更新日志
+
+### v1.1.0 (2025-11-03)
+
+**🆕 新增功能**
+- ✨ **依赖自动下载**：在设置界面添加"下载依赖"功能
+  - 一键下载 FFmpeg（约 100MB）
+  - 一键下载 Whisper-Faster-XXL（约 2GB）
+  - 支持 ZIP 和 7Z 格式自动解压
+  - 自动配置到正确位置
+
+- 🎨 **自定义下载卡片**：
+  - 带进度条的美观下载界面
+  - 三种状态：可下载、下载中、已安装
+  - 流畅的动画效果
+  - 实时进度反馈
+
+- 🌐 **完全中文化**：
+  - 所有界面文本统一为中文
+  - 友好的提示信息
+  - 详细的错误说明
+
+**🔧 改进**
+- 优化了下载服务的错误处理
+- 改进了文件检测逻辑
+- 添加了下载状态管理
+
+**📚 文档**
+- 更新了 README 文档
+- 添加了自动下载使用说明
+- 补充了常见问题解答
+
+### v1.0.0 (2024)
+- 🎉 初始版本发布
+- 基于 Faster-Whisper 的语音转录功能
+- 现代化的 Fluent Design 界面
+- 多语言和多格式支持
 
 ## 📄 许可证
 

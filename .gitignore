@@ -41,3 +41,7 @@ faster-whisper*/
 **/models/whisper-faster
 **/models/uvr
 **/models/GalTransl/**/*.json
+
+# 忽略安装文件
+installer_output/
+installer.iss
