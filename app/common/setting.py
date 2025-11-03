@@ -5,14 +5,14 @@ from pathlib import Path
 DEBUG = "__compiled__" not in globals()
 
 
-YEAR = 2023
-AUTHOR = "zhiyiYo"
-VERSION = "v0.0.1"
-APP_NAME = "Your App Name"
-HELP_URL = "https://qfluentwidgets.com"
-REPO_URL = "https://github.com/zhiyiYo/PyQt-Fluent-Widgets"
-FEEDBACK_URL = "https://github.com/zhiyiYo/PyQt-Fluent-Widgets/issues"
-DOC_URL = "https://qfluentwidgets.com/"
+YEAR = 2025
+AUTHOR = "Nana1237854"
+VERSION = "v1.1.0"
+APP_NAME = "Shinobu Voice Transcriber"
+HELP_URL = "https://github.com/Nana1237854/Shinobu-Voice-Transcriber"
+REPO_URL = "https://github.com/Nana1237854/Shinobu-Voice-Transcriber"
+FEEDBACK_URL = "https://github.com/Nana1237854/Shinobu-Voice-Transcriber/issues"
+DOC_URL = "https://github.com/Nana1237854/Shinobu-Voice-Transcriber/blob/main/README.md"
 
 CONFIG_FOLDER = Path('AppData').absolute()
 CONFIG_FILE = CONFIG_FOLDER / "config.json"
