@@ -41,9 +41,9 @@ class MainWindow(MSFluentWindow):
         # TODO: add navigation items
         # self.addSubInterface(self.homeInterface, FIF.HOME, self.tr('Home'))
         self.addSubInterface(
-            self.transcribeInterface, Icon.HEADPHONE, self.tr('听写'), isTransparent=True)
+            self.transcribeInterface, Icon.HEADPHONE, self.tr('Transcribe'), isTransparent=True)
         self.addSubInterface(
-            self.taskInterface, Icon.TASK, self.tr('任务日志'), isTransparent=True)
+            self.taskInterface, Icon.TASK, self.tr('Task Log'), isTransparent=True)
 
         # add custom widget to bottom
         self.addSubInterface(

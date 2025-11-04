@@ -34,9 +34,9 @@ class LogTaskView(QWidget):
         super().__init__(parent=parent)
         self.setObjectName("log")
 
-        self.titleLabel = BodyLabel(self.tr("服务运行日志"), self)
+        self.titleLabel = BodyLabel(self.tr("Task Log"), self)
         self.logContent = PlainTextEdit(self)
-        self.clearButton = PushButton(self.tr("清空日志"), self)
+        self.clearButton = PushButton(self.tr("Clear Log"), self)
 
         # 日志文件读取相关
         self.timer = None
@@ -90,8 +90,8 @@ class LogTaskView(QWidget):
                 if not self.file_not_found_message_shown:
                     timestamp = QDateTime.currentDateTime().toString("yyyy-MM-dd hh:mm:ss")
                     self.logContent.setPlainText(
-                        f"[{timestamp}] 错误: 日志文件 '{self.LOG_PATH}' 未找到。\n"
-                        f"正在等待文件创建...\n"
+                        f"[{timestamp}] {self.tr('Error: Log file not found')}: '{self.LOG_PATH}'.\n"
+                        f"{self.tr('Waiting for file to be created')}...\n"
                     )
                     self.file_not_found_message_shown = True
                 self.last_read_position = 0  # 如果文件消失了，重置读取位置
@@ -111,7 +111,7 @@ class LogTaskView(QWidget):
                     # 文件变小了，意味着文件被截断或替换了
                     timestamp = QDateTime.currentDateTime().toString("yyyy-MM-dd hh:mm:ss")
                     self.logContent.appendPlainText(
-                        f"\n[{timestamp}] 检测到日志文件截断或轮转。从头开始读取...\n"
+                        f"\n[{timestamp}] {self.tr('Log file truncation detected. Reading from beginning')}...\n"
                     )
                     self.last_read_position = 0
 
@@ -134,18 +134,18 @@ class LogTaskView(QWidget):
             if not self.file_not_found_message_shown:
                 timestamp = QDateTime.currentDateTime().toString("yyyy-MM-dd hh:mm:ss")
                 self.logContent.setPlainText(
-                    f"[{timestamp}] 错误: 日志文件 '{self.LOG_PATH}' 再次检查时未找到。\n"
+                    f"[{timestamp}] {self.tr('Error: Log file not found on recheck')}: '{self.LOG_PATH}'.\n"
                 )
                 self.file_not_found_message_shown = True
             self.last_read_position = 0
             
         except IOError as e:
             timestamp = QDateTime.currentDateTime().toString("yyyy-MM-dd hh:mm:ss")
-            self.logContent.appendPlainText(f"[{timestamp}] 读取日志文件IO错误: {e}\n")
+            self.logContent.appendPlainText(f"[{timestamp}] {self.tr('IO error reading log file')}: {e}\n")
             
         except Exception as e:
             timestamp = QDateTime.currentDateTime().toString("yyyy-MM-dd hh:mm:ss")
-            self.logContent.appendPlainText(f"[{timestamp}] 读取日志文件时发生未知错误: {e}\n")
+            self.logContent.appendPlainText(f"[{timestamp}] {self.tr('Unknown error reading log file')}: {e}\n")
 
     def _clear_log_file(self):
         """清空日志文件和显示"""
@@ -157,7 +157,7 @@ class LogTaskView(QWidget):
             if os.path.exists(self.LOG_PATH):
                 with open(self.LOG_PATH, 'w', encoding='utf-8') as f:
                     timestamp = QDateTime.currentDateTime().toString("yyyy-MM-dd hh:mm:ss")
-                    f.write(f"[{timestamp}] 日志已清空\n")
+                    f.write(f"[{timestamp}] {self.tr('Log cleared')}\n")
                 
                 # 重置读取位置
                 self.last_read_position = 0
@@ -165,7 +165,7 @@ class LogTaskView(QWidget):
                 # 立即读取新内容
                 self._read_log_file()
         except Exception as e:
-            print(f"清空日志文件时出错: {e}")
+            print(f"{self.tr('Error clearing log file')}: {e}")
 
     def showEvent(self, event):
         """当视图显示时，确保定时器运行并立即读取最新日志"""

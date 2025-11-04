@@ -1,4 +1,4 @@
-from PySide6.QtCore import Qt, QThread, Signal
+from PySide6.QtCore import Qt, QThread, Signal, QCoreApplication
 from PySide6.QtGui import QDropEvent, QIcon
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QFileDialog, QHBoxLayout
 
@@ -30,7 +30,7 @@ class TranscriptionWorker(QThread):
             if result:
                 self.finished.emit(result)
             else:
-                self.error.emit("转录失败，未返回结果")
+                self.error.emit(QCoreApplication.translate("TranscriptionWorker", "Transcription failed, no result returned"))
         except Exception as e:
             self.error.emit(str(e))
 
@@ -39,23 +39,23 @@ class TranscribeConfigCard(GroupHeaderCardWidget):
     """听写配置卡片"""
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setTitle(self.tr("听写设置"))
+        self.setTitle(self.tr("Transcribe Settings"))
         self.mediaParser = None
 
-        self.targetFileButton = PushButton(self.tr("选择"))
+        self.targetFileButton = PushButton(self.tr("Select"))
         self.transcribeModelComboBox = ComboBox()
         self.inputLanguageComboBox = ComboBox()
-        self.timeStampButton = SwitchButton(self.tr("关闭"), self)
+        self.timeStampButton = SwitchButton(self.tr("Close"), self)
         self.outputFileTypeComBox = ComboBox()
         self.averageCompactSpinBox = CompactSpinBox()
-        self.saveFolderButton = PushButton(self.tr("选择"), self, FluentIcon.FOLDER)
-        self.openModelsButton = PushButton(self.tr("打开模型目录"), self, FluentIcon.FOLDER)
+        self.saveFolderButton = PushButton(self.tr("Select"), self, FluentIcon.FOLDER)
+        self.openModelsButton = PushButton(self.tr("Open Model Directory"), self, FluentIcon.FOLDER)
         
         self.hintIcon = IconWidget(InfoBarIcon.INFORMATION, self)
         self.hintLabel = BodyLabel(
-            self.tr("点击听写按钮开始听写") + ' 👉')
+            self.tr("Click the transcribe button to start transcribing") + ' 👉')
         self.transcribeButton = PrimaryPushButton(
-            self.tr("听写"), self, FluentIcon.PLAY_SOLID)
+            self.tr("Transcribe"), self, FluentIcon.PLAY_SOLID)
         
         self.toolBarLayout = QHBoxLayout()
 
@@ -71,16 +71,20 @@ class TranscribeConfigCard(GroupHeaderCardWidget):
         # 动态加载 Whisper 模型列表
         self._loadWhisperModels()
         
-        self.inputLanguageComboBox.addItems(["中文", "日语", "英语", "韩语", "俄语", "法语"])
-        self.outputFileTypeComBox.addItems(
-            ["原文SRT", "双语SRT", "原文LRC", "原文TXT", 
-             "双语TXT", "原文XLSX", "双语XLSX"]
-            )
+        self.inputLanguageComboBox.addItems([
+            self.tr("Chinese"), self.tr("Japanese"), self.tr("English"), 
+            self.tr("Korean"), self.tr("Russian"), self.tr("French")
+        ])
+        self.outputFileTypeComBox.addItems([
+            self.tr("Original SRT"), self.tr("Bilingual SRT"), self.tr("Original LRC"), 
+            self.tr("Original TXT"), self.tr("Bilingual TXT"), self.tr("Original XLSX"), 
+            self.tr("Bilingual XLSX")
+        ])
         
         # 更改按钮状态 - 默认关闭
         self.timeStampButton.setChecked(False)
-        self.timeStampButton.setOffText(self.tr("关闭"))
-        self.timeStampButton.setOnText(self.tr("开启"))
+        self.timeStampButton.setOffText(self.tr("Close"))
+        self.timeStampButton.setOnText(self.tr("Open"))
 
         self.averageCompactSpinBox.setRange(0, 10)
         self.averageCompactSpinBox.setValue(0)
@@ -143,50 +147,50 @@ class TranscribeConfigCard(GroupHeaderCardWidget):
         # 添加小组件在卡片中
         self.targetFileGroup = self.addGroup(
             icon=FluentIcon.DOCUMENT,
-            title=self.tr("目标文件"),
-            content=self.tr("选择待听写的文件"),
+            title=self.tr("Target File"),
+            content=self.tr("Select the file to transcribe"),
             widget=self.targetFileButton
         )
         self.addGroup(
             icon=FluentIcon.IOT,
-            title=self.tr("听写模型"),
-            content=self.tr("选择用于听写的模型类别"),
+            title=self.tr("Transcribe Model"),
+            content=self.tr("Select the model category for transcribing"),
             widget=self.transcribeModelComboBox
         )
         self.addGroup(
             icon=FluentIcon.LANGUAGE,
-            title=self.tr("输入语言"),
-            content=self.tr("选择输入的语言"),
+            title=self.tr("Input Language"),
+            content=self.tr("Select the input language"),
             widget=self.inputLanguageComboBox
         )
         self.addGroup(
             icon=FluentIcon.UNIT.icon(),
-            title=self.tr("时间戳"),
-            content=self.tr("是否生成时间戳（仅用于快速定位原句，不保证精确）"),
+            title=self.tr("Timestamp"),
+            content=self.tr("Generate timestamp (only used for quick location of original sentence, not guaranteed to be accurate)"),
             widget=self.timeStampButton
         )
         self.addGroup(
             icon=FluentIcon.SAVE,
-            title=self.tr("输出文件"),
-            content=self.tr("选择输出的文件"),
+            title=self.tr("Output File"),
+            content=self.tr("Select the output file"),
             widget=self.outputFileTypeComBox
         )
         self.addGroup(
             icon=FluentIcon.CLIPPING_TOOL.icon(),
-            title=self.tr("均分音频"),
-            content=self.tr("按人数均分音频生成文件（用于字幕组快速分工）\n注：时长向上取整；能整除则均分，否则余数给最后一人"),
+            title=self.tr("Split Audio"),
+            content=self.tr("Split audio by number of people (used for subtitle group quick分工)\nNote: Duration is rounded up; if divisible, split evenly, otherwise the remainder is given to the last person"),
             widget=self.averageCompactSpinBox
         )
         self.saveFolderGroup = self.addGroup(
             icon=FluentIcon.FOLDER,
-            title=self.tr("保存目录"),
+            title=self.tr("Save Folder"),
             content=cfg.get(cfg.saveFolder),
             widget=self.saveFolderButton
         )
         self.addGroup(
             icon=FluentIcon.FOLDER_ADD,
-            title=self.tr("模型管理"),
-            content=self.tr("打开模型文件夹，添加或管理 Whisper 模型"),
+            title=self.tr("Model Management"),
+            content=self.tr("Open the model folder, add or manage Whisper models"),
             widget=self.openModelsButton
         )
         
@@ -213,10 +217,10 @@ class TranscribeModeInfoCard(SimpleCardWidget):
 
         self.iconLabel = ImageLabel(QIcon("app/resource/images/logo.png").pixmap(100, 100), self)
 
-        self.nameLabel = TitleLabel(self.tr("听写模式"), self)
+        self.nameLabel = TitleLabel(self.tr("Transcribe Mode"), self)
 
         self.descriptionLabel = BodyLabel(
-            self.tr("下载模式工作流：\n选择听写文件 -> 选择听写模型 -> 选择输入语言 -> 选择输出文件 -> 选择保存目录 -> 点击听写按钮进行听写")
+            self.tr("Transcribe mode workflow:\nSelect transcribe file -> Select transcribe model -> Select input language -> Select output file -> Select save folder -> Click the transcribe button to transcribe")
         )
 
         self.tagWhisperButton = PillPushButton(self.tr("whisper"), self)
@@ -328,9 +332,9 @@ class TranscribeInterface(ScrollArea):
         """选择文件按钮点击事件"""
         file_path, _ = QFileDialog.getOpenFileName(
             self,
-            self.tr("选择文件"),
+            self.tr("Select File"),
             cfg.get(cfg.saveFolder),
-            self.tr("视频/音频文件 (*.mp4 *.mkv *.avi *.mp3 *.wav *.flac);;所有文件 (*.*)")
+            self.tr("Video/Audio Files (*.mp4 *.mkv *.avi *.mp3 *.wav *.flac);;All Files (*.*)")
         )
         
         if file_path:
@@ -350,7 +354,7 @@ class TranscribeInterface(ScrollArea):
             self.transcribeConfigCard.targetFileGroup.contentLabel.setText(file_name)
             
             InfoBar.success(
-                self.tr("文件已选择"),
+                self.tr("File Selected"),
                 file_name,
                 duration=2000,
                 position=InfoBarPosition.TOP,
@@ -361,7 +365,7 @@ class TranscribeInterface(ScrollArea):
         """保存目录按钮点击事件"""
         folder_path = QFileDialog.getExistingDirectory(
             self,
-            self.tr("选择保存目录"),
+            self.tr("Select Save Folder"),
             cfg.get(cfg.saveFolder)
         )
         
@@ -371,7 +375,7 @@ class TranscribeInterface(ScrollArea):
             self.transcribeConfigCard.saveFolderGroup.contentLabel.setText(folder_path)
             
             InfoBar.success(
-                self.tr("保存目录已更新"),
+                self.tr("Save Folder Updated"),
                 folder_path,
                 duration=2000,
                 position=InfoBarPosition.TOP,
@@ -383,8 +387,8 @@ class TranscribeInterface(ScrollArea):
         # 1. 检查服务是否可用
         if not transcriptionService.isAvailable():
             InfoBar.error(
-                self.tr("服务不可用"),
-                self.tr("听写服务当前不可用，请确保 ffmpeg 已安装"),
+                self.tr("Service Unavailable"),
+                self.tr("Transcribe service is currently unavailable, please ensure ffmpeg is installed"),
                 duration=3000,
                 position=InfoBarPosition.TOP,
                 parent=self
@@ -394,8 +398,8 @@ class TranscribeInterface(ScrollArea):
         # 2. 检查是否选择了文件
         if not self.selectedFilePath:
             InfoBar.warning(
-                self.tr("未选择文件"),
-                self.tr("请先选择要听写的文件"),
+                self.tr("No File Selected"),
+                self.tr("Please select the file to transcribe"),
                 duration=2000,
                 position=InfoBarPosition.TOP,
                 parent=self
@@ -405,8 +409,8 @@ class TranscribeInterface(ScrollArea):
         # 3. 检查是否已有任务在运行
         if self.worker and self.worker.isRunning():
             InfoBar.warning(
-                self.tr("任务进行中"),
-                self.tr("当前有任务正在执行，请等待完成"),
+                self.tr("Task Running"),
+                self.tr("There is a task running, please wait for it to complete"),
                 duration=2000,
                 position=InfoBarPosition.TOP,
                 parent=self
@@ -416,12 +420,12 @@ class TranscribeInterface(ScrollArea):
         # 4. 获取配置参数
         # 语言映射
         language_map = {
-            "中文": "zh",
-            "日语": "ja",
-            "英语": "en",
-            "韩语": "ko",
-            "俄语": "ru",
-            "法语": "fr"
+            self.tr("Chinese"): "zh",
+            self.tr("Japanese"): "ja",
+            self.tr("English"): "en",
+            self.tr("Korean"): "ko",
+            self.tr("Russian"): "ru",
+            self.tr("French"): "fr"
         }
         
         # 获取选择的值
@@ -438,12 +442,14 @@ class TranscribeInterface(ScrollArea):
         # 5. 获取时间戳设置
         include_timestamp = self.transcribeConfigCard.timeStampButton.isChecked()
         
-        print(f"[听写任务] 包含时间戳: {'是' if include_timestamp else '否'}")
+        status = self.tr('Yes') if include_timestamp else self.tr('No')
+        print(f"[听写任务] 包含时间戳: {status}")
         
         # 6. 获取均分人数设置
         split_parts = self.transcribeConfigCard.averageCompactSpinBox.value()
         
-        print(f"[听写任务] 均分人数: {split_parts if split_parts > 0 else '不均分'}")
+        split_info = str(split_parts) if split_parts > 0 else self.tr('No splitting')
+        print(f"[听写任务] 均分人数: {split_info}")
         
         # 7. 获取保存目录
         save_folder = cfg.get(cfg.saveFolder)
@@ -466,14 +472,14 @@ class TranscribeInterface(ScrollArea):
         
         # 禁用听写按钮，防止重复点击
         self.transcribeConfigCard.transcribeButton.setEnabled(False)
-        self.transcribeConfigCard.transcribeButton.setText(self.tr("听写中..."))
+        self.transcribeConfigCard.transcribeButton.setText(self.tr("Transcribing..."))
         
         # 启动线程
         self.worker.start()
         
         InfoBar.info(
-            self.tr("任务已开始"),
-            self.tr("听写任务已开始执行，请查看运行日志了解进度"),
+            self.tr("Task Started"),
+            self.tr("Transcribe task has started, please check the log for progress"),
             duration=3000,
             position=InfoBarPosition.TOP,
             parent=self
@@ -483,16 +489,16 @@ class TranscribeInterface(ScrollArea):
         """转录完成回调"""
         # 恢复听写按钮
         self.transcribeConfigCard.transcribeButton.setEnabled(True)
-        self.transcribeConfigCard.transcribeButton.setText(self.tr("听写"))
+        self.transcribeConfigCard.transcribeButton.setText(self.tr("Transcribe"))
         
         # 显示成功提示
         from pathlib import Path
         output_path = result.get('output_path', '')
-        file_name = Path(output_path).name if output_path else "未知文件"
+        file_name = Path(output_path).name if output_path else self.tr("Unknown file")
         
         InfoBar.success(
             self.tr("听写完成"),
-            self.tr(f"文件已成功转录: {file_name}"),
+            self.tr("文件已成功转录: {file_name}").format(file_name=file_name),
             duration=5000,
             position=InfoBarPosition.TOP,
             parent=self
@@ -500,10 +506,10 @@ class TranscribeInterface(ScrollArea):
         
         # 重置文件选择
         self.selectedFilePath = None
-        self.transcribeConfigCard.targetFileButton.setText(self.tr("选择"))
+        self.transcribeConfigCard.targetFileButton.setText(self.tr("Select"))
         
         # 重置配置卡中显示的路径
-        self.transcribeConfigCard.targetFileGroup.contentLabel.setText(self.tr("选择待听写的文件"))
+        self.transcribeConfigCard.targetFileGroup.contentLabel.setText(self.tr("Select the file to transcribe"))
         
         print(f"[转录完成] 输出文件: {output_path}")
         print(f"[转录完成] SRT文件: {result.get('srt_path', 'N/A')}")
@@ -512,12 +518,12 @@ class TranscribeInterface(ScrollArea):
         """转录错误回调"""
         # 恢复听写按钮
         self.transcribeConfigCard.transcribeButton.setEnabled(True)
-        self.transcribeConfigCard.transcribeButton.setText(self.tr("听写"))
+        self.transcribeConfigCard.transcribeButton.setText(self.tr("Transcribe"))
         
         # 显示错误提示
         InfoBar.error(
-            self.tr("听写失败"),
-            self.tr(f"转录过程出错: {error_msg}"),
+            self.tr("Transcribe Failed"),
+            self.tr("Transcribe process error: {error_msg}").format(error_msg=error_msg),
             duration=8000,
             position=InfoBarPosition.TOP,
             parent=self
@@ -527,15 +533,15 @@ class TranscribeInterface(ScrollArea):
 
     def _onTimeStampSwitchChanged(self, checked: bool):
         """时间戳开关状态改变事件"""
-        status_text = "已开启" if checked else "已关闭"
+        status_text = self.tr("Enabled") if checked else self.tr("Disabled")
         print(f"[配置] 时间戳设置: {status_text}")
     
     def _onAverageSpinBoxChanged(self, value: int):
         """均分人数变化事件"""
         if value > 0:
-            print(f"[配置] 均分人数设置为: {value} 人")
+            print(self.tr("[Config] Split parts set to: {value} people").format(value=value))
         else:
-            print(f"[配置] 均分功能已关闭")
+            print(self.tr("[Config] Split function disabled"))
     
     def _onOpenModelsButtonClicked(self):
         """打开模型目录按钮点击事件"""
@@ -580,7 +586,7 @@ class TranscribeInterface(ScrollArea):
             print(f"[模型管理] 打开目录失败: {e}")
             InfoBar.error(
                 self.tr("打开失败"),
-                self.tr(f"无法打开目录: {str(e)}"),
+                self.tr("无法打开目录: {error}").format(error=str(e)),
                 duration=3000,
                 position=InfoBarPosition.TOP,
                 parent=self
@@ -647,7 +653,7 @@ class TranscribeInterface(ScrollArea):
                 self.transcribeConfigCard.targetFileGroup.contentLabel.setText(file_name)
                 
                 InfoBar.success(
-                    self.tr("文件已添加"),
+                    self.tr("File Added"),
                     file_name,
                     duration=2000,
                     position=InfoBarPosition.TOP,
@@ -655,8 +661,8 @@ class TranscribeInterface(ScrollArea):
                 )
             else:
                 InfoBar.warning(
-                    self.tr("不支持的文件格式"),
-                    self.tr("请拖入视频或音频文件"),
+                    self.tr("Unsupported File Format"),
+                    self.tr("Please drag in video or audio files"),
                     duration=2000,
                     position=InfoBarPosition.TOP,
                     parent=self

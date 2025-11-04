@@ -59,7 +59,7 @@ class DownloadSettingCard(SettingCard):
         super().__init__(icon, title, content, parent)
         
         # 创建按钮
-        self.button = PushButton('下载', self)
+        self.button = PushButton(self.tr('Download'), self)
         self.button.setFixedWidth(120)
         self.button.clicked.connect(self.clicked)
         
@@ -82,7 +82,7 @@ class DownloadSettingCard(SettingCard):
     def setDownloading(self, isDownloading: bool):
         """设置下载状态"""
         if isDownloading:
-            self.button.setText('下载中...')
+            self.button.setText(self.tr('Downloading...'))
             self.button.setEnabled(False)
             self.progressBar.show()
             self.progressBar.start()
@@ -93,14 +93,14 @@ class DownloadSettingCard(SettingCard):
     
     def setInstalled(self):
         """标记为已安装"""
-        self.button.setText('已安装')
+        self.button.setText(self.tr('Installed'))
         self.button.setEnabled(False)
         self.progressBar.hide()
         self.progressBar.stop()
     
     def setDownloadable(self):
         """标记为可下载"""
-        self.button.setText('下载')
+        self.button.setText(self.tr('Download'))
         self.button.setEnabled(True)
         self.progressBar.hide()
         self.progressBar.stop()
@@ -168,17 +168,17 @@ class SettingInterface(ScrollArea):
 
         # download dependencies
         self.downloadGroup = SettingCardGroup(
-            '下载依赖', self.scrollWidget)
+            self.tr('Download Dependencies'), self.scrollWidget)
         self.downloadFFmpegCard = DownloadSettingCard(
             FIF.DOWNLOAD,
             'FFmpeg',
-            '下载 FFmpeg 用于音频/视频处理',
+            self.tr('Download FFmpeg for audio/video processing'),
             self.downloadGroup
         )
         self.downloadWhisperCard = DownloadSettingCard(
             FIF.DOWNLOAD,
             'Whisper-Faster-XXL',
-            '下载 Whisper-Faster-XXL 用于语音转录',
+            self.tr('Download Whisper-Faster-XXL for speech transcription'),
             self.downloadGroup
         )
 
@@ -193,10 +193,10 @@ class SettingInterface(ScrollArea):
             parent=self.updateSoftwareGroup
         )
         self.checkUpdateCard = PrimaryPushSettingCard(
-            '检查更新',
+            self.tr('Check for updates'),
             FIF.UPDATE,
-            '检查更新',
-            f'当前版本：{VERSION}',
+            self.tr('Check for updates'),
+            self.tr('Current version: ') + VERSION,
             self.updateSoftwareGroup
         )
 
@@ -219,7 +219,7 @@ class SettingInterface(ScrollArea):
             self.aboutGroup
         )
         self.aboutCard = PrimaryPushSettingCard(
-            '关于',
+            self.tr('About'),
             ":/qfluentwidgets/images/logo.png",
             self.tr('About'),
             '© ' + self.tr('Copyright') + f" {YEAR}, {AUTHOR}. " +
@@ -331,8 +331,8 @@ class SettingInterface(ScrollArea):
         self.downloadFFmpegCard.setDownloading(True)
         
         InfoBar.info(
-            '开始下载',
-            '正在下载 FFmpeg，请稍候...',
+            self.tr('Download started'),
+            self.tr('Downloading FFmpeg, please wait...'),
             duration=2000,
             parent=self
         )
@@ -349,8 +349,8 @@ class SettingInterface(ScrollArea):
         self.downloadWhisperCard.setDownloading(True)
         
         InfoBar.info(
-            '开始下载',
-            '正在下载 Whisper-Faster-XXL，请稍候...',
+            self.tr('Download started'),
+            self.tr('Downloading Whisper-Faster-XXL, please wait...'),
             duration=2000,
             parent=self
         )
@@ -365,15 +365,15 @@ class SettingInterface(ScrollArea):
         
         if success:
             InfoBar.success(
-                '下载完成',
-                'FFmpeg 已成功下载并安装',
+                self.tr('Download completed'),
+                self.tr('FFmpeg has been successfully downloaded and installed'),
                 duration=3000,
                 parent=self
             )
         else:
             InfoBar.error(
-                '下载失败',
-                f'下载 FFmpeg 失败: {message}',
+                self.tr('Download failed'),
+                self.tr('Failed to download FFmpeg: ') + message,
                 duration=5000,
                 parent=self
             )
@@ -386,15 +386,15 @@ class SettingInterface(ScrollArea):
         
         if success:
             InfoBar.success(
-                '下载完成',
-                'Whisper-Faster-XXL 已成功下载并安装',
+                self.tr('Download completed'),
+                self.tr('Whisper-Faster-XXL has been successfully downloaded and installed'),
                 duration=3000,
                 parent=self
             )
         else:
             InfoBar.error(
-                '下载失败',
-                f'下载 Whisper-Faster-XXL 失败: {message}',
+                self.tr('Download failed'),
+                self.tr('Failed to download Whisper-Faster-XXL: ') + message,
                 duration=5000,
                 parent=self
             )
@@ -406,8 +406,8 @@ class SettingInterface(ScrollArea):
         # 检查是否已有版本检查线程在运行
         if self.versionCheckThread and self.versionCheckThread.isRunning():
             InfoBar.warning(
-                '正在检查',
-                '版本检查正在进行中，请稍候...',
+                self.tr('Checking in progress'),
+                self.tr('Version check is in progress, please wait...'),
                 duration=2000,
                 parent=self
             )
@@ -415,8 +415,8 @@ class SettingInterface(ScrollArea):
         
         # 显示检查中提示
         InfoBar.info(
-            '正在检查更新',
-            '请稍候...',
+            self.tr('Checking for updates'),
+            self.tr('Please wait...'),
             duration=2000,
             parent=self
         )
@@ -436,26 +436,26 @@ class SettingInterface(ScrollArea):
             html_url = info.get('html_url', '')
             
             InfoBar.success(
-                '发现新版本！',
-                f"v{version} 已发布",
+                self.tr('New version found!'),
+                self.tr('Version {version} has been released').format(version=f"v{version}"),
                 duration=5000,
                 parent=self
             )
             
             # 构建消息内容
-            message = f"发现新版本 v{version}\n\n"
+            message = self.tr('New version {version} found\n\n').format(version=f"v{version}")
             if body:
                 # 限制更新说明长度
                 body_preview = body[:200]
                 if len(body) > 200:
                     body_preview += "..."
-                message += f"更新说明：\n{body_preview}\n\n"
-            message += "是否前往下载页面？"
+                message += self.tr('Release notes:\n{notes}\n\n').format(notes=body_preview)
+            message += self.tr('Do you want to go to the download page?')
             
             # 询问是否跳转到下载页面
             reply = QMessageBox.question(
                 self,
-                '发现新版本',
+                self.tr('New version found'),
                 message,
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                 QMessageBox.StandardButton.Yes
@@ -466,8 +466,8 @@ class SettingInterface(ScrollArea):
         else:
             # 已是最新版本
             InfoBar.success(
-                '已是最新版本',
-                f"当前版本 v{versionService.currentVersion} 已是最新",
+                self.tr('Already up to date'),
+                self.tr('Current version {version} is the latest').format(version=f"v{versionService.currentVersion}"),
                 duration=3000,
                 parent=self
             )
@@ -475,8 +475,8 @@ class SettingInterface(ScrollArea):
     def _onVersionCheckError(self, error_message: str):
         """版本检查错误回调"""
         InfoBar.error(
-            '检查更新失败',
-            f'无法连接到更新服务器: {error_message}',
+            self.tr('Update check failed'),
+            self.tr('Unable to connect to update server: ') + error_message,
             duration=5000,
             parent=self
         )
