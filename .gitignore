@@ -15,7 +15,7 @@ AppData/
 # 忽略日志文件
 log.txt
 
-# 忽略工具文件
+# 忽略工具文件（保留Readme.md）
 tools/
 
 # 忽略环境配置文件

@@ -7,7 +7,7 @@ DEBUG = "__compiled__" not in globals()
 
 YEAR = 2025
 AUTHOR = "Nana1237854"
-VERSION = "v1.1.0"
+VERSION = "v1.2.0"
 APP_NAME = "Shinobu Voice Transcriber"
 HELP_URL = "https://github.com/Nana1237854/Shinobu-Voice-Transcriber"
 REPO_URL = "https://github.com/Nana1237854/Shinobu-Voice-Transcriber"

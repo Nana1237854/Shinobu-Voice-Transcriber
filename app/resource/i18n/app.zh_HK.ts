@@ -180,7 +180,7 @@
     </message>
     <message>
         <location filename="../../view/setting_interface.py" line="211"/>
-        <source>Discover new features and learn useful tips about Fluent Client</source>
+        <source>Discover new features and learn useful tips about Shinobu-Voice-Transcriber</source>
         <translation>發現並了解新功能和實用技巧</translation>
     </message>
     <message>
@@ -191,7 +191,7 @@
     </message>
     <message>
         <location filename="../../view/setting_interface.py" line="218"/>
-        <source>Help us improve Fluent Client by providing feedback</source>
+        <source>Help us improve Shinobu-Voice-Transcriber by providing feedback</source>
         <translation>通過提供反饋幫助我們改進應用</translation>
     </message>
     <message>

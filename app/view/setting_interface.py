@@ -215,7 +215,7 @@ class SettingInterface(ScrollArea):
             self.tr('Provide feedback'),
             FIF.FEEDBACK,
             self.tr('Provide feedback'),
-            self.tr('Help us improve Fluent Client by providing feedback'),
+            self.tr('Help us improve Shinobu-Voice-Transcriber by providing feedback'),
             self.aboutGroup
         )
         self.aboutCard = PrimaryPushSettingCard(
