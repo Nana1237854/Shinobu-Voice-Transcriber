@@ -8,15 +8,39 @@ from qfluentwidgets import (SwitchSettingCard, FolderListSettingCard,
 from qfluentwidgets import FluentIcon as FIF
 from qfluentwidgets import SettingCardGroup as CardGroup
 from qfluentwidgets import InfoBar
-from PySide6.QtCore import Qt, Signal, QUrl, QStandardPaths
+from PySide6.QtCore import Qt, Signal, QUrl, QStandardPaths, QThread
 from PySide6.QtGui import QDesktopServices, QFont
-from PySide6.QtWidgets import QWidget, QLabel, QFileDialog, QVBoxLayout, QHBoxLayout
+from PySide6.QtWidgets import QWidget, QLabel, QFileDialog, QVBoxLayout, QHBoxLayout, QMessageBox
 
 from ..common.config import cfg, isWin11
 from ..common.setting import HELP_URL, FEEDBACK_URL, AUTHOR, VERSION, YEAR
 from ..common.signal_bus import signalBus
 from ..common.style_sheet import StyleSheet
 from ..service.download_service import downloadService
+from ..service.version_service import versionService
+
+
+class VersionCheckThread(QThread):
+    """版本检查线程"""
+    finished = Signal(bool, dict)  # (has_new_version, update_info)
+    error = Signal(str)
+    
+    def run(self):
+        """在线程中执行版本检查"""
+        try:
+            has_new = versionService.hasNewVersion()
+            if has_new:
+                info = versionService.getUpdateInfo()
+            else:
+                info = {
+                    'version': versionService.currentVersion,
+                    'name': VERSION,
+                    'body': '',
+                    'html_url': HELP_URL
+                }
+            self.finished.emit(has_new, info)
+        except Exception as e:
+            self.error.emit(str(e))
 
 
 class SettingCardGroup(CardGroup):
@@ -94,6 +118,9 @@ class SettingInterface(ScrollArea):
         # download threads
         self.ffmpegDownloadThread = None
         self.whisperDownloadThread = None
+        
+        # version check thread
+        self.versionCheckThread = None
 
         # setting label
         self.settingLabel = QLabel(self.tr("Settings"), self)
@@ -165,6 +192,13 @@ class SettingInterface(ScrollArea):
             configItem=cfg.checkUpdateAtStartUp,
             parent=self.updateSoftwareGroup
         )
+        self.checkUpdateCard = PrimaryPushSettingCard(
+            '检查更新',
+            FIF.UPDATE,
+            '检查更新',
+            f'当前版本：{VERSION}',
+            self.updateSoftwareGroup
+        )
 
         # application
         self.aboutGroup = SettingCardGroup(self.tr('About'), self.scrollWidget)
@@ -185,7 +219,7 @@ class SettingInterface(ScrollArea):
             self.aboutGroup
         )
         self.aboutCard = PrimaryPushSettingCard(
-            self.tr('Check update'),
+            '关于',
             ":/qfluentwidgets/images/logo.png",
             self.tr('About'),
             '© ' + self.tr('Copyright') + f" {YEAR}, {AUTHOR}. " +
@@ -231,6 +265,7 @@ class SettingInterface(ScrollArea):
         self.downloadGroup.addSettingCard(self.downloadWhisperCard)
 
         self.updateSoftwareGroup.addSettingCard(self.updateOnStartUpCard)
+        self.updateSoftwareGroup.addSettingCard(self.checkUpdateCard)
 
         self.aboutGroup.addSettingCard(self.helpCard)
         self.aboutGroup.addSettingCard(self.feedbackCard)
@@ -266,9 +301,11 @@ class SettingInterface(ScrollArea):
         self.downloadWhisperCard.clicked.connect(self._onDownloadWhisperClicked)
 
         # check update
-        self.aboutCard.clicked.connect(signalBus.checkUpdateSig)
+        self.checkUpdateCard.clicked.connect(self._onCheckUpdateClicked)
 
         # about
+        self.aboutCard.clicked.connect(
+            lambda: QDesktopServices.openUrl(QUrl(HELP_URL)))
         self.feedbackCard.clicked.connect(
             lambda: QDesktopServices.openUrl(QUrl(FEEDBACK_URL)))
 
@@ -363,3 +400,83 @@ class SettingInterface(ScrollArea):
             )
         
         self._updateDownloadCardsStatus()
+
+    def _onCheckUpdateClicked(self):
+        """检查更新按钮点击事件"""
+        # 检查是否已有版本检查线程在运行
+        if self.versionCheckThread and self.versionCheckThread.isRunning():
+            InfoBar.warning(
+                '正在检查',
+                '版本检查正在进行中，请稍候...',
+                duration=2000,
+                parent=self
+            )
+            return
+        
+        # 显示检查中提示
+        InfoBar.info(
+            '正在检查更新',
+            '请稍候...',
+            duration=2000,
+            parent=self
+        )
+        
+        # 创建并启动版本检查线程
+        self.versionCheckThread = VersionCheckThread()
+        self.versionCheckThread.finished.connect(self._onVersionCheckFinished)
+        self.versionCheckThread.error.connect(self._onVersionCheckError)
+        self.versionCheckThread.start()
+
+    def _onVersionCheckFinished(self, has_new_version: bool, info: dict):
+        """版本检查完成回调"""
+        if has_new_version:
+            # 有新版本
+            version = info.get('version', 'Unknown')
+            body = info.get('body', '')
+            html_url = info.get('html_url', '')
+            
+            InfoBar.success(
+                '发现新版本！',
+                f"v{version} 已发布",
+                duration=5000,
+                parent=self
+            )
+            
+            # 构建消息内容
+            message = f"发现新版本 v{version}\n\n"
+            if body:
+                # 限制更新说明长度
+                body_preview = body[:200]
+                if len(body) > 200:
+                    body_preview += "..."
+                message += f"更新说明：\n{body_preview}\n\n"
+            message += "是否前往下载页面？"
+            
+            # 询问是否跳转到下载页面
+            reply = QMessageBox.question(
+                self,
+                '发现新版本',
+                message,
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.Yes
+            )
+            
+            if reply == QMessageBox.StandardButton.Yes:
+                QDesktopServices.openUrl(QUrl(html_url))
+        else:
+            # 已是最新版本
+            InfoBar.success(
+                '已是最新版本',
+                f"当前版本 v{versionService.currentVersion} 已是最新",
+                duration=3000,
+                parent=self
+            )
+
+    def _onVersionCheckError(self, error_message: str):
+        """版本检查错误回调"""
+        InfoBar.error(
+            '检查更新失败',
+            f'无法连接到更新服务器: {error_message}',
+            duration=5000,
+            parent=self
+        )
