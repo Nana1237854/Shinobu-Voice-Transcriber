@@ -53,13 +53,26 @@ app = QApplication(sys.argv)
 app.setAttribute(Qt.AA_DontCreateNativeWidgetSiblings)
 
 # internationalization
-locale = cfg.get(cfg.language).value
-translator = FluentTranslator(locale)
-galleryTranslator = QTranslator()
-galleryTranslator.load(locale, "app", ".", ":/app/i18n")
+from app.common.config import Language
 
-app.installTranslator(translator)
-app.installTranslator(galleryTranslator)
+locale = cfg.get(cfg.language).value
+fluentTranslator = FluentTranslator(locale)
+appTranslator = QTranslator()
+
+# 根据语言加载对应的翻译文件
+language_setting = cfg.get(cfg.language)
+if language_setting == Language.CHINESE_SIMPLIFIED:
+    appTranslator.load("app/resource/i18n/app.zh_CN.qm")
+    print("[国际化] 加载简体中文翻译")
+elif language_setting == Language.CHINESE_TRADITIONAL:
+    appTranslator.load("app/resource/i18n/app.zh_HK.qm")
+    print("[国际化] 加载繁体中文翻译")
+else:
+    # AUTO 或 ENGLISH 默认使用英文（源语言）
+    print("[国际化] 使用默认语言（English）")
+
+app.installTranslator(fluentTranslator)
+app.installTranslator(appTranslator)
 
 # create main window
 w = MainWindow()

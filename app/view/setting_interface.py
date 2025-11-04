@@ -208,7 +208,7 @@ class SettingInterface(ScrollArea):
             FIF.HELP,
             self.tr('Help'),
             self.tr(
-                'Discover new features and learn useful tips about Fluent Client'),
+                'Discover new features and learn useful tips about Shinobu-Voice-Transcriber'),
             self.aboutGroup
         )
         self.feedbackCard = PrimaryPushSettingCard(
@@ -220,7 +220,7 @@ class SettingInterface(ScrollArea):
         )
         self.aboutCard = PrimaryPushSettingCard(
             self.tr('About'),
-            ":/qfluentwidgets/images/logo.png",
+            "app/resource/images/logo.ico",
             self.tr('About'),
             '© ' + self.tr('Copyright') + f" {YEAR}, {AUTHOR}. " +
             self.tr('Version') + " " + VERSION,

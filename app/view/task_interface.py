@@ -15,7 +15,7 @@ class TaskInterface(Interface):
     """日志查看界面"""
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setTitle(self.tr("运行日志"))
+        self.setTitle(self.tr("Service Running Log"))
 
         self.logTaskView = LogTaskView(self)  # 日志视图
         

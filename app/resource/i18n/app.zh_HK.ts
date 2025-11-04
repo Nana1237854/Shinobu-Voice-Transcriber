@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE TS>
-<TS version="2.1" language="zh_HK" sourcelanguage="en_US">
+<TS version="2.1" language="zh_HK" sourcelanguage="en">
 <context>
     <name>DownloadSettingCard</name>
     <message>
@@ -363,6 +363,12 @@
         <location filename="../../view/transcribe_interface.py" line="51"/>
         <source>Select</source>
         <translation>選擇</translation>
+    </message>
+    <message>
+        <location filename="../../view/transcribe_interface.py" line="48"/>
+        <location filename="../../view/transcribe_interface.py" line="86"/>
+        <source>Open</source>
+        <translation>開啟</translation>
     </message>
     <message>
         <location filename="../../view/transcribe_interface.py" line="48"/>

@@ -367,6 +367,12 @@
     <message>
         <location filename="../../view/transcribe_interface.py" line="48"/>
         <location filename="../../view/transcribe_interface.py" line="86"/>
+        <source>Open</source>
+        <translation>打开</translation>
+    </message>
+    <message>
+        <location filename="../../view/transcribe_interface.py" line="48"/>
+        <location filename="../../view/transcribe_interface.py" line="86"/>
         <source>Close</source>
         <translation>关闭</translation>
     </message>
